@@ -55,7 +55,11 @@
 #define TUNGETFILTER _IOR('T', 219, struct sock_fprog)
 #endif
 
+#ifdef ANDROID_BUILD
+#define TUN_DEV_GEN_PATH	"/dev/tun"
+#else
 #define TUN_DEV_GEN_PATH	"/dev/net/tun"
+#endif
 
 int check_tun_cr(int no_tun_err)
 {
