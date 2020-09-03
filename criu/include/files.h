@@ -15,6 +15,10 @@
 #include "images/fown.pb-c.h"
 #include "images/vma.pb-c.h"
 
+#ifdef ANDROID_BUILD
+#include "linux/limits.h"
+#endif
+
 struct parasite_drain_fd;
 struct pstree_item;
 struct file_desc;
