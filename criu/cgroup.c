@@ -564,7 +564,12 @@ static int __new_open_cgroupfs(struct cg_ctl *cc)
 			goto err;
 		}
 	} else {
+#ifdef ANDROID_BUILD
+// TODO: THIS IS PROBABLY NOT A GOOD SOLUTION, CHECK AND FIX strdupa is missing, so using strdup instead
+		char *saveptr = NULL, *buf = strdup(cc->name);
+#else
 		char *saveptr = NULL, *buf = strdupa(cc->name);
+#endif
 		name = strtok_r(buf, ",", &saveptr);
 		while (name) {
 			if (sys_fsconfig(fsfd, FSCONFIG_SET_FLAG, name, NULL, 0)) {
