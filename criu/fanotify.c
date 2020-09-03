@@ -1,4 +1,8 @@
 #include "fanotify.h"
+
+
+#include <unistd.h>
+
 #include <sys/syscall.h>
 #include <stdint.h>
 

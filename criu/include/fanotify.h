@@ -1,6 +1,7 @@
 #ifndef __CR_FANOTIFY_H
 #define __CR_FANOTIFY_H
 
+#include <stdint.h>
 
 int fanotify_init (unsigned int __flags, unsigned int __event_f_flags);
 

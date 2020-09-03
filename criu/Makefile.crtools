@@ -19,6 +19,10 @@ obj-y			+= cr-service.o
 obj-y			+= crtools.o
 obj-y			+= eventfd.o
 obj-y			+= eventpoll.o
+ifeq ($(ARCH),arm)
+obj-y			+= fanotify.o
+obj-y			+= pivot_root.o
+endif
 obj-y			+= fault-injection.o
 obj-y			+= fifo.o
 obj-y			+= file-ids.o
