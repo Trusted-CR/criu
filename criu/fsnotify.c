@@ -17,13 +17,10 @@
 #include <sys/mount.h>
 #ifdef ANDROID_BUILD
 #include "aio.h"
+#include <linux/fanotify.h>
+#include "fanotify.h"
 #else
 #include <aio.h>
-#endif
-
-#ifdef ANDROID_BUILD
-#include <linux/fanotify.h>
-#else
 #include <sys/fanotify.h>
 #endif
 
