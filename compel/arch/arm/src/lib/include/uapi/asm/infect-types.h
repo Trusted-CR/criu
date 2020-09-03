@@ -41,6 +41,7 @@ typedef struct user_vfp		user_fpregs_struct_t;
 
 /* Copied from arch/arm/include/asm/user.h */
 
+#ifndef ANDROID_BUILD
 struct user_vfp {
 	unsigned long long	fpregs[32];
 	unsigned long		fpscr;
@@ -51,6 +52,7 @@ struct user_vfp_exc {
 	unsigned long		fpinst;
 	unsigned long		fpinst2;
 };
+#endif
 
 #define REG_RES(regs)		((regs).ARM_r0)
 #define REG_IP(regs)		((regs).ARM_pc)
