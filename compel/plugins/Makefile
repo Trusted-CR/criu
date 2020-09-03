@@ -53,6 +53,12 @@ std-lib-y		+= ./$(PLUGIN_ARCH_DIR)/std/parasite-head.o
 target			+= fds
 fds-lib-y		+= fds/fds.o
 
+ifeq ($(ARCH),arm)
+	std-lib-y	+= ./$(PLUGIN_ARCH_DIR)/std/memcpy.o
+	std-lib-y	+= ./$(PLUGIN_ARCH_DIR)/std/memmove.o
+	std-lib-y	+= ./$(PLUGIN_ARCH_DIR)/std/memset.o
+endif
+
 ifeq ($(ARCH),x86)
 	std-lib-y	+= ./$(PLUGIN_ARCH_DIR)/std/memcpy.o
 endif
