@@ -15,9 +15,17 @@
 #include <poll.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
+#ifdef ANDROID_BUILD
+#include "aio.h"
+#else
 #include <aio.h>
+#endif
 
+#ifdef ANDROID_BUILD
+#include <linux/fanotify.h>
+#else
 #include <sys/fanotify.h>
+#endif
 
 #include "common/compiler.h"
 #include "imgset.h"
