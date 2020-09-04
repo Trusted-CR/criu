@@ -24,11 +24,11 @@ static inline int atomic_cmpxchg(atomic_t *ptr, int old, int new)
 
 	do {
 		__asm__ __volatile__("@ atomic_cmpxchg\n"
-		"ldrex	%w1, [%3]\n"
+		"ldrex	%1, [%3]\n"
 		"mov	%0, #0\n"
-		"teq	%w1, %4\n"
+		"teq	%1, %4\n"
 		"it	eq\n"
-		"strexeq %0, %w5, [%3]\n"
+		"strexeq %0, %5, [%3]\n"
 			: "=&r" (res), "=&r" (oldval), "+Qo" (ptr->counter)
 			: "r" (&ptr->counter), "Ir" (old), "r" (new)
 			: "cc");
@@ -82,9 +82,9 @@ static inline int atomic_add_return(int i, atomic_t *v)
 	smp_mb();
 
 	__asm__ __volatile__("@ atomic_add_return\n"
-"1:	ldrex	%w0, [%3]\n"
-"	add	%w0, %w0, %4\n"
-"	strex	%w1, %w0, [%3]\n"
+"1:	ldrex	%0, [%3]\n"
+"	add	%0, %0, %4\n"
+"	strex	%1, %0, [%3]\n"
 "	teq	%1, #0\n"
 "	bne	1b\n"
 	: "=&r" (result), "=&r" (tmp), "+Qo" (v->counter)
@@ -104,9 +104,9 @@ static inline int atomic_sub_return(int i, atomic_t *v)
 	smp_mb();
 
 	__asm__ __volatile__("@ atomic_sub_return\n"
-"1:	ldrex	%w0, [%3]\n"
-"	sub	%w0, %w0, %4\n"
-"	strex	%1, %w0, [%3]\n"
+"1:	ldrex	%0, [%3]\n"
+"	sub	%0, %0, %4\n"
+"	strex	%1, %0, [%3]\n"
 "	teq	%1, #0\n"
 "	bne	1b\n"
 	: "=&r" (result), "=&r" (tmp), "+Qo" (v->counter)
