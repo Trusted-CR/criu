@@ -20,7 +20,11 @@ static inline unsigned page_size(void)
 static inline unsigned page_shift(void)
 {
 	if (!__page_shift)
+#ifdef ANDROID_BUILD
+		__page_shift = (__builtin_ffsl(page_size()) - 1);
+#else
 		__page_shift = (ffsl(page_size()) - 1);
+#endif
 	return __page_shift;
 }
 

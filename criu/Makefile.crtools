@@ -23,6 +23,11 @@ ifeq ($(ARCH),arm)
 obj-y			+= fanotify.o
 obj-y			+= pivot_root.o
 endif
+ifeq ($(ARCH),aarch64)
+obj-y			+= fanotify.o
+obj-y			+= pivot_root.o
+obj-y			+= index.o
+endif
 obj-y			+= fault-injection.o
 obj-y			+= fifo.o
 obj-y			+= file-ids.o

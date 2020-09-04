@@ -10,6 +10,7 @@
 #include "errno.h"
 #include "infect.h"
 #include "infect-priv.h"
+#include <string.h>
 
 unsigned __page_size = 0;
 unsigned __page_shift = 0;

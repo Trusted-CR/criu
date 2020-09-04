@@ -221,7 +221,7 @@ static int kerndat_get_shmemdev(void)
 
 	munmap(map, PAGE_SIZE);
 	kdat.shmem_dev = dev;
-	pr_info("Found anon-shmem device at %"PRIx64"\n", (unsigned long long) kdat.shmem_dev);
+	pr_info("Found anon-shmem device at %"PRIx64"\n", (unsigned long) kdat.shmem_dev);
 	return 0;
 
 err:
