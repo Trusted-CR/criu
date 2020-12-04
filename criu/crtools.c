@@ -247,11 +247,29 @@ int main(int argc, char *argv[], char *envp[])
 		return cr_pre_dump_tasks(opts.tree_id) != 0;
 	}
 
+	if (!strcmp(argv[optind], "execute")) {
+		pr_info("Going to execute a single instruction\n");
+		
+		if (opts.tree_id)
+			pr_warn("Using -t with criu restore is obsoleted\n");
+
+		ret = cr_restore_tasks(true);
+		pr_info("Executed a single instruction!");
+		if (ret == 0 && opts.exec_cmd) {
+			close_pid_proc();
+			execvp(opts.exec_cmd[0], opts.exec_cmd);
+			pr_perror("Failed to exec command %s", opts.exec_cmd[0]);
+			ret = 1;
+		}
+
+		return ret != 0;
+	}
+
 	if (!strcmp(argv[optind], "restore")) {
 		if (opts.tree_id)
 			pr_warn("Using -t with criu restore is obsoleted\n");
 
-		ret = cr_restore_tasks();
+		ret = cr_restore_tasks(false);
 		if (ret == 0 && opts.exec_cmd) {
 			close_pid_proc();
 			execvp(opts.exec_cmd[0], opts.exec_cmd);

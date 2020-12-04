@@ -760,7 +760,7 @@ static int restore_using_req(int sk, CriuOpts *req)
 
 	setproctitle("restore --rpc -D %s", images_dir);
 
-	if (cr_restore_tasks())
+	if (cr_restore_tasks(false))
 		goto exit;
 
 	success = true;
