@@ -19,10 +19,13 @@ Dockerfile.%: Dockerfile.%.hdr Dockerfile.%.tmpl
 	cat $^ > $@
 
 $(TARGETS):
+	rm -rf ../../.ccache
 	mkdir -p $(HOME)/.ccache
 	mv $(HOME)/.ccache ../../
 	$(CONTAINER_RUNTIME) build  -t criu-$@ -f Dockerfile.$@ $(DB_CC) $(DB_ENV) ../..
-	$(CONTAINER_RUNTIME) run criu-$@ tar c -C /tmp .ccache | tar x -C $(HOME)
+	$(CONTAINER_RUNTIME)  create -ti --name dummy criu-$@ bash
+	$(CONTAINER_RUNTIME)  cp dummy:/criu/criu/criu /opt/optee-qemu/build/shared_folder/criu
+	$(CONTAINER_RUNTIME)  rm -f dummy
 .PHONY: $(TARGETS)
 
 # Clang builds add some Docker build env
