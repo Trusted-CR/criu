@@ -34,6 +34,7 @@
 #include "file-lock.h"
 #include "cr-service.h"
 #include "plugin.h"
+#include "pstree.h"
 #include "criu-log.h"
 #include "util.h"
 #include "protobuf-desc.h"
@@ -255,14 +256,14 @@ int main(int argc, char *argv[], char *envp[])
 
 		ret = cr_restore_tasks(true);
 		pr_info("Executed a single instruction!");
-		if (ret == 0 && opts.exec_cmd) {
-			close_pid_proc();
-			execvp(opts.exec_cmd[0], opts.exec_cmd);
-			pr_perror("Failed to exec command %s", opts.exec_cmd[0]);
-			ret = 1;
+		pr_info("root_item: %d\n", root_item->pid->real);
+		if(ret == 0 && root_item->pid->real) {
+			// Now start dumping again
+			return cr_dump_tasks(root_item->pid->real);
+		} else {
+			pr_err("Something must have gone wrong..\n");
+			return ret;
 		}
-
-		return ret != 0;
 	}
 
 	if (!strcmp(argv[optind], "restore")) {
