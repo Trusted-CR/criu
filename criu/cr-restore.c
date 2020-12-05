@@ -2442,8 +2442,10 @@ skip_ns_bouncing:
 	pr_info("Restore finished successfully. Tasks resumed.\n");
 	write_stats(RESTORE_STATS);
 
-	/* This has the effect of dismissing the image streamer */
-	close_image_dir();
+	if(!single_instruction) {
+		/* This has the effect of dismissing the image streamer */
+		close_image_dir();
+	}
 
 	ret = run_scripts(ACT_POST_RESUME);
 	if (ret != 0)
