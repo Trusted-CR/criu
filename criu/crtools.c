@@ -255,11 +255,18 @@ int main(int argc, char *argv[], char *envp[])
 		if (opts.tree_id)
 			pr_warn("Using -t with criu restore is obsoleted\n");
 
+		// Restore the checkpoint and keep it paused.
 		ret = cr_restore_tasks();
+
 		pr_info("Executed a single instruction!");
-		pr_info("root_item: %d\n", root_item->pid->real);
+		// TODO: ptrace execute single instruction here
+
+		// Re-open the images directory in dump mode instead of restore mode
+		SET_CHAR_OPTS(imgs_dir, ".");
+		open_image_dir(opts.imgs_dir, O_DUMP);
+		
+		// Checkpoint again
 		if(ret == 0 && root_item->pid->real) {
-			// Now start dumping again
 			return cr_dump_tasks(root_item->pid->real);
 		} else {
 			pr_err("Something must have gone wrong..\n");
