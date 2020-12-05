@@ -287,6 +287,11 @@ struct ns_id *ns_ids = NULL;
 static unsigned int ns_next_id = 1;
 unsigned long root_ns_mask = 0;
 
+void empty_ns(void) {
+	// Ugly and potential memory leak.
+	ns_ids = NULL;
+}
+
 static void nsid_add(struct ns_id *ns, struct ns_desc *nd, unsigned int id, pid_t pid)
 {
 	ns->nd = nd;

@@ -264,6 +264,11 @@ int main(int argc, char *argv[], char *envp[])
 		// Re-open the images directory in dump mode instead of restore mode
 		SET_CHAR_OPTS(imgs_dir, ".");
 		open_image_dir(opts.imgs_dir, O_DUMP);
+
+
+		close_pid_proc();
+
+		empty_ns();
 		
 		// Checkpoint again
 		if(ret == 0 && root_item->pid->real) {

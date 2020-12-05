@@ -148,6 +148,8 @@ extern struct ns_id *ns_ids;
 		.len		= sizeof(_str) - 1,	\
 	}
 
+extern void empty_ns(void);
+
 extern bool check_ns_proc(struct fd_link *link);
 
 extern struct ns_desc pid_ns_desc;
