@@ -119,6 +119,9 @@ int compel_interrupt_task(int pid)
 {
 	int ret;
 
+	if(!opts.single_instruction)
+		return 0;
+
 	ret = ptrace(PTRACE_SEIZE, pid, NULL, 0);
 	if (ret) {
 		/*
@@ -212,6 +215,8 @@ int compel_wait_task(int pid, int ppid,
 	 */
 
 try_again:
+	if(opts.single_instruction)
+		return COMPEL_TASK_STOPPED;
 
 	ret = wait4(pid, &status, __WALL, NULL);
 	if (ret < 0) {
