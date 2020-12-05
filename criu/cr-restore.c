@@ -2192,7 +2192,7 @@ static int write_restored_pid(void)
 	return 0;
 }
 
-static int restore_root_task(struct pstree_item *init, bool single_instruction)
+static int restore_root_task(struct pstree_item *init)
 {
 	enum trace_flags flag = TRACE_ALL;
 	int ret, fd, mnt_ns_fd = -1;
@@ -2431,7 +2431,7 @@ skip_ns_bouncing:
 
 	fini_cgroup();
 
-	if(!single_instruction) {
+	if(!opts.single_instruction) {
 		/* Detaches from processes and they continue run through sigreturn. */
 		if (finalize_restore_detach())
 			goto out_kill_network_unlocked;
@@ -2442,7 +2442,7 @@ skip_ns_bouncing:
 	pr_info("Restore finished successfully. Tasks resumed.\n");
 	write_stats(RESTORE_STATS);
 
-	if(!single_instruction) {
+	if(!opts.single_instruction) {
 		/* This has the effect of dismissing the image streamer */
 		close_image_dir();
 	}
@@ -2451,7 +2451,7 @@ skip_ns_bouncing:
 	if (ret != 0)
 		pr_err("Post-resume script ret code %d\n", ret);
 
-	if(!single_instruction) {
+	if(!opts.single_instruction) {
 		if (!opts.restore_detach && !opts.exec_cmd)
 			wait(NULL);
 	}
@@ -2524,7 +2524,7 @@ int prepare_dummy_task_state(struct pstree_item *pi)
 	return 0;
 }
 
-int cr_restore_tasks(bool single_instruction)
+int cr_restore_tasks(void)
 {
 	int ret = -1;
 
@@ -2580,7 +2580,7 @@ int cr_restore_tasks(bool single_instruction)
 	if (prepare_lazy_pages_socket() < 0)
 		goto err;
 
-	ret = restore_root_task(root_item, single_instruction);
+	ret = restore_root_task(root_item);
 err:
 	cr_plugin_fini(CR_PLUGIN_STAGE__RESTORE, ret);
 	return ret;

@@ -250,11 +250,12 @@ int main(int argc, char *argv[], char *envp[])
 
 	if (!strcmp(argv[optind], "execute")) {
 		pr_info("Going to execute a single instruction\n");
+		opts.single_instruction = true;
 		
 		if (opts.tree_id)
 			pr_warn("Using -t with criu restore is obsoleted\n");
 
-		ret = cr_restore_tasks(true);
+		ret = cr_restore_tasks();
 		pr_info("Executed a single instruction!");
 		pr_info("root_item: %d\n", root_item->pid->real);
 		if(ret == 0 && root_item->pid->real) {
@@ -270,7 +271,7 @@ int main(int argc, char *argv[], char *envp[])
 		if (opts.tree_id)
 			pr_warn("Using -t with criu restore is obsoleted\n");
 
-		ret = cr_restore_tasks(false);
+		ret = cr_restore_tasks();
 		if (ret == 0 && opts.exec_cmd) {
 			close_pid_proc();
 			execvp(opts.exec_cmd[0], opts.exec_cmd);
