@@ -2438,10 +2438,15 @@ skip_ns_bouncing:
 	} else {
 		// This code actually works to execute a single system call:
 		
-		// int exec_ret = ptrace(PTRACE_SYSCALL, root_item->pid->real, 0, 0);
-		// pr_info("ptrace(PTRACE_SYSCALL): %d\n", exec_ret);
-		// exec_ret = waitpid(root_item->pid->real, 0, 0);
-		// pr_info("waitpid(): %d\n", exec_ret);
+		int exec_ret = ptrace(PTRACE_SYSCALL, root_item->pid->real, 0, 0);
+		pr_info("ptrace(PTRACE_SYSCALL): %d\n", exec_ret);
+		exec_ret = waitpid(root_item->pid->real, 0, 0);
+		pr_info("waitpid(): %d\n", exec_ret);
+
+		exec_ret = ptrace(PTRACE_SYSCALL, root_item->pid->real, 0, 0);
+		pr_info("ptrace(PTRACE_SYSCALL): %d\n", exec_ret);
+		exec_ret = waitpid(root_item->pid->real, 0, 0);
+		pr_info("waitpid(): %d\n", exec_ret);
 	}
 
 	pr_info("Restore finished successfully. Tasks resumed.\n");
