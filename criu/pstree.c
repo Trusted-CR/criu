@@ -438,8 +438,8 @@ void pstree_insert_pid(struct pid *pid_node)
 	struct pid* n;
 
 	n = lookup_create_pid(pid_node->ns[0].virt, pid_node);
-
-	BUG_ON(n != pid_node);
+	if(!opts.single_instruction)
+		BUG_ON(n != pid_node);
 }
 
 struct pstree_item *lookup_create_item(pid_t pid)
