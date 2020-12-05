@@ -27,6 +27,8 @@
 #include "rpc-pie-priv.h"
 #include "infect-util.h"
 
+#include "../../../criu/include/cr_options.h"
+
 #define __sys(foo)	foo
 #define __sys_err(ret)	(-errno)
 
