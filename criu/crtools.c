@@ -252,7 +252,7 @@ int main(int argc, char *argv[], char *envp[])
 	}
 
 	if (!strcmp(argv[optind], "start")) {
-		pid_t pid = opts.tree_id;
+		pid_t pid;
 		pr_info("Going to start a binary and checkpoint it right at the start\n");
 		opts.dump_at_start = true;
 
@@ -260,21 +260,21 @@ int main(int argc, char *argv[], char *envp[])
 		// ./loop &
 		// ./criu.sh start -t `pidof loop` -D check --shell-job -v4
 
-		// pid = fork();
-		// switch (pid) {
-		// 	case -1: /* error */
-		// 		pr_err("%s", strerror(errno));
-		// 	case 0:  /* child */
-		// 		ptrace(PTRACE_TRACEME, 0, 0, 0);
+		pid = fork();
+		switch (pid) {
+			case -1: /* error */
+				pr_err("%s", strerror(errno));
+			case 0:  /* child */
+				// ptrace(PTRACE_TRACEME, 0, 0, 0);
 
-		// 		// Detach from criu being the parent process
-		// 		setsid();
+				// Detach from criu being the parent process
+				setsid();
 				
-		// 		/* Because we're now a tracee, execvp will block until the parent
-		// 		* attaches and allows us to continue. */
-		// 		execvp("./loop", argv + 1);
-		// 		pr_err("Error: %s", strerror(errno));
-		// }
+				/* Because we're now a tracee, execvp will block until the parent
+				* attaches and allows us to continue. */
+				execvp("./loop", argv + 1);
+				pr_err("Error: %s", strerror(errno));
+		}
 
 		ret = ptrace(PTRACE_SEIZE, pid, NULL, 0);
 		if (ret) {
