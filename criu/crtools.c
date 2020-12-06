@@ -14,6 +14,7 @@
 
 #include <sys/wait.h>
 #include <sys/ptrace.h>
+#include "elf.h"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -294,16 +295,32 @@ int main(int argc, char *argv[], char *envp[])
 
 		pr_info("The pid: %d\n", pid);
 
-		for(int i = 0; i < 10; i++) {
+		while(true) {
+			struct user_pt_regs regs;
+			struct iovec io;
+			long syscall;
+			io.iov_base = &regs;
+			io.iov_len = sizeof(regs);
+			
 			if (ptrace(PTRACE_SYSCALL, pid, 0, 0) == -1)
 				pr_err("%s", strerror(errno));
 			if (waitpid(pid, 0, 0) == -1)
 				pr_err("%s", strerror(errno));
 
+			/* Gather system call arguments */
+			if (ptrace(PTRACE_GETREGSET, pid, (void*)NT_PRSTATUS, &io) == -1)
+				pr_err("%s", strerror(errno));
+			syscall = regs.regs[8];
+
 			if (ptrace(PTRACE_SYSCALL, pid, 0, 0) == -1)
 				pr_err("%s", strerror(errno));
 			if (waitpid(pid, 0, 0) == -1)
 				pr_err("%s", strerror(errno));
+		
+			if(syscall == 221) {
+				pr_info("SYSCALL_EXECVE!");
+				break;
+			}
 		}
 
 		return cr_dump_tasks(pid);
