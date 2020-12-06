@@ -252,44 +252,62 @@ int main(int argc, char *argv[], char *envp[])
 	}
 
 	if (!strcmp(argv[optind], "start")) {
-		pid_t pid;
+		pid_t pid = opts.tree_id;
 		pr_info("Going to start a binary and checkpoint it right at the start\n");
 		opts.dump_at_start = true;
 
-		pid = fork();
-		switch (pid) {
-			case -1: /* error */
-				pr_err("%s", strerror(errno));
-			case 0:  /* child */
-				ptrace(PTRACE_TRACEME, 0, 0, 0);
+		// pid = fork();
+		// switch (pid) {
+		// 	case -1: /* error */
+		// 		pr_err("%s", strerror(errno));
+		// 	case 0:  /* child */
+		// 		ptrace(PTRACE_TRACEME, 0, 0, 0);
 
-				// Detach from criu being the parent process
-				setsid();
+		// 		// Detach from criu being the parent process
+		// 		setsid();
 				
-				/* Because we're now a tracee, execvp will block until the parent
-				* attaches and allows us to continue. */
-				execvp("./loop", argv + 1);
-				pr_err("Error: %s", strerror(errno));
+		// 		/* Because we're now a tracee, execvp will block until the parent
+		// 		* attaches and allows us to continue. */
+		// 		execvp("./loop", argv + 1);
+		// 		pr_err("Error: %s", strerror(errno));
+		// }
+
+		ret = ptrace(PTRACE_SEIZE, pid, NULL, 0);
+		if (ret) {
+			/*
+			* ptrace API doesn't allow to distinguish
+			* attaching to zombie from other errors.
+			* All errors will be handled in compel_wait_task().
+			*/
+			pr_warn("Unable to interrupt task: %d (%s)\n", pid, strerror(errno));
+			return ret;
 		}
 
-		/* parent */
-    	waitpid(pid, 0, 0); // sync with execvp
-
-		pr_info("We are now at the starting point :]\n");
-
-		pr_info("The pid: %d\n", pid);
-
-		for(int i = 0; i < 10; i++) {
-			if (ptrace(PTRACE_SYSCALL, pid, 0, 0) == -1)
-				pr_err("%s", strerror(errno));
-			if (waitpid(pid, 0, 0) == -1)
-				pr_err("%s", strerror(errno));
-
-			if (ptrace(PTRACE_SYSCALL, pid, 0, 0) == -1)
-				pr_err("%s", strerror(errno));
-			if (waitpid(pid, 0, 0) == -1)
-				pr_err("%s", strerror(errno));
+		ret = ptrace(PTRACE_INTERRUPT, pid, NULL, NULL);
+		if (ret < 0) {
+			pr_warn("SEIZE %d: can't interrupt task: %s\n", pid, strerror(errno));
+			if (ptrace(PTRACE_DETACH, pid, NULL, NULL))
+				pr_perror("Unable to detach from %d", pid);
 		}
+
+		// /* parent */
+    	// waitpid(pid, 0, 0); // sync with execvp
+
+		// pr_info("We are now at the starting point :]\n");
+
+		// pr_info("The pid: %d\n", pid);
+
+		// for(int i = 0; i < 10; i++) {
+		// 	if (ptrace(PTRACE_SYSCALL, pid, 0, 0) == -1)
+		// 		pr_err("%s", strerror(errno));
+		// 	if (waitpid(pid, 0, 0) == -1)
+		// 		pr_err("%s", strerror(errno));
+
+		// 	if (ptrace(PTRACE_SYSCALL, pid, 0, 0) == -1)
+		// 		pr_err("%s", strerror(errno));
+		// 	if (waitpid(pid, 0, 0) == -1)
+		// 		pr_err("%s", strerror(errno));
+		// }
 
 		return cr_dump_tasks(pid);
 	}

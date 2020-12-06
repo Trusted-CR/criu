@@ -119,7 +119,7 @@ int compel_interrupt_task(int pid)
 {
 	int ret;
 
-	if(opts.single_instruction)
+	if(opts.single_instruction || opts.dump_at_start)
 		return 0;
 
 	ret = ptrace(PTRACE_SEIZE, pid, NULL, 0);
