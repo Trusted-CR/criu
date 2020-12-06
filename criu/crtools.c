@@ -277,7 +277,21 @@ int main(int argc, char *argv[], char *envp[])
 
 		pr_info("We are now at the starting point :]\n");
 
-		return 0;
+		pr_info("The pid: %d\n", pid);
+
+		for(int i = 0; i < 10; i++) {
+			if (ptrace(PTRACE_SYSCALL, pid, 0, 0) == -1)
+				pr_err("%s", strerror(errno));
+			if (waitpid(pid, 0, 0) == -1)
+				pr_err("%s", strerror(errno));
+
+			if (ptrace(PTRACE_SYSCALL, pid, 0, 0) == -1)
+				pr_err("%s", strerror(errno));
+			if (waitpid(pid, 0, 0) == -1)
+				pr_err("%s", strerror(errno));
+		}
+
+		return cr_dump_tasks(pid);
 	}
 
 	if (!strcmp(argv[optind], "execute")) {
