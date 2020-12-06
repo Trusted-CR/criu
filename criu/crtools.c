@@ -12,6 +12,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <sys/wait.h>
+#include <sys/ptrace.h>
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -246,6 +249,35 @@ int main(int argc, char *argv[], char *envp[])
 		}
 
 		return cr_pre_dump_tasks(opts.tree_id) != 0;
+	}
+
+	if (!strcmp(argv[optind], "start")) {
+		pid_t pid;
+		pr_info("Going to start a binary and checkpoint it right at the start\n");
+		opts.dump_at_start = true;
+
+		pid = fork();
+		switch (pid) {
+			case -1: /* error */
+				pr_err("%s", strerror(errno));
+			case 0:  /* child */
+				ptrace(PTRACE_TRACEME, 0, 0, 0);
+
+				// Detach from criu being the parent process
+				setsid();
+				
+				/* Because we're now a tracee, execvp will block until the parent
+				* attaches and allows us to continue. */
+				execvp("./loop", argv + 1);
+				pr_err("Error: %s", strerror(errno));
+		}
+
+		/* parent */
+    	waitpid(pid, 0, 0); // sync with execvp
+
+		pr_info("We are now at the starting point :]\n");
+
+		return 0;
 	}
 
 	if (!strcmp(argv[optind], "execute")) {

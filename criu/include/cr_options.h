@@ -176,6 +176,7 @@ struct cr_options {
 	int 			file_validation_method;
 
 	bool			single_instruction;
+	bool			dump_at_start;
 };
 
 extern struct cr_options opts;

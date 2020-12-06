@@ -282,6 +282,7 @@ void init_opts(void)
 	opts.pre_dump_mode = PRE_DUMP_SPLICE;
 	opts.file_validation_method = FILE_VALIDATION_DEFAULT;
 	opts.single_instruction = false;
+	opts.dump_at_start = false;
 }
 
 bool deprecated_ok(char *what)
