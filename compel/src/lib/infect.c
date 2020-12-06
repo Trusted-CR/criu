@@ -215,7 +215,7 @@ int compel_wait_task(int pid, int ppid,
 	 */
 
 try_again:
-	if(opts.single_instruction)
+	if(opts.single_instruction || opts.dump_at_start)
 		return COMPEL_TASK_ALIVE;
 
 	ret = wait4(pid, &status, __WALL, NULL);
