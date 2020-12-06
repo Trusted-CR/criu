@@ -256,6 +256,10 @@ int main(int argc, char *argv[], char *envp[])
 		pr_info("Going to start a binary and checkpoint it right at the start\n");
 		opts.dump_at_start = true;
 
+		// Commands this was working with: 
+		// ./loop &
+		// ./criu.sh start -t `pidof loop` -D check --shell-job -v4
+
 		// pid = fork();
 		// switch (pid) {
 		// 	case -1: /* error */
