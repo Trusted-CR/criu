@@ -266,6 +266,10 @@ int main(int argc, char *argv[], char *envp[])
 
 				// Detach from criu being the parent process
 				setsid();
+
+				// File descriptors are inherited from the parent even after exec, close them to be sure.
+				for (int fd = 3; fd < 256; fd++) 
+					(void) close(fd);
 				
 				/* Because we're now a tracee, execvp will block until the parent
 				* attaches and allows us to continue. */
@@ -273,11 +277,7 @@ int main(int argc, char *argv[], char *envp[])
 				pr_err("Error: %s", strerror(errno));
 		}
 
-		// if (ptrace(PTRACE_ATTACH, pid, 0, 0)) {
-		// 	pr_perror("Can't attach to %d", pid);
-		// 	return -1;
-		// }
-
+		// Attach to the child
 		if (ptrace(PTRACE_SEIZE, pid, 0, 0)) {
 			pr_perror("Can't seize to %d", pid);
 			return -1;
@@ -288,12 +288,8 @@ int main(int argc, char *argv[], char *envp[])
 			return -1;
 		}
 
-		/* parent */
-    	waitpid(pid, 0, 0); // sync with execvp
-
-		pr_info("We are now at the starting point :]\n");
-
-		pr_info("The pid: %d\n", pid);
+		/* Wait for the child process */
+    	waitpid(pid, 0, 0);
 
 		while(true) {
 			struct user_pt_regs regs;
@@ -302,6 +298,7 @@ int main(int argc, char *argv[], char *envp[])
 			io.iov_base = &regs;
 			io.iov_len = sizeof(regs);
 			
+			// Run until before a syscall
 			if (ptrace(PTRACE_SYSCALL, pid, 0, 0) == -1)
 				pr_err("%s", strerror(errno));
 			if (waitpid(pid, 0, 0) == -1)
@@ -312,13 +309,14 @@ int main(int argc, char *argv[], char *envp[])
 				pr_err("%s", strerror(errno));
 			syscall = regs.regs[8];
 
+			// Execute the syscall itself
 			if (ptrace(PTRACE_SYSCALL, pid, 0, 0) == -1)
 				pr_err("%s", strerror(errno));
 			if (waitpid(pid, 0, 0) == -1)
 				pr_err("%s", strerror(errno));
 		
 			if(syscall == 221) {
-				pr_info("SYSCALL_EXECVE!");
+				pr_info("SYSCALL_EXECVE detected: pid %d is now at the starting point\n", pid);
 				break;
 			}
 		}
