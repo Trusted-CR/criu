@@ -26,7 +26,7 @@ def dinf(opts, name):
     return open(os.path.join(opts['dir'], name))
 
 
-def decode(opts):
+def decode(opts, conn):
     indent = None
 
     try:
@@ -35,7 +35,10 @@ def decode(opts):
         print("Unknown magic %#x.\n"\
           "Maybe you are feeding me an image with "\
           "raw data(i.e. pages.img)?" % exc.magic, file=sys.stderr)
-        sys.exit(1)
+        conn.sendall("ERROR: Unknown magic")
+    except IOError:
+        conn.sendall("ERROR: No such file or directory")
+        return False
 
     if opts['pretty']:
         indent = 4
@@ -44,6 +47,8 @@ def decode(opts):
     json.dump(img, f, indent=indent)
     if f == sys.stdout:
         f.write("\n")
+    
+    return True
 
 
 def encode(opts):
@@ -417,14 +422,12 @@ def main():
             continue;
         
         opts = vars(parser.parse_args(data.split()))
-
         if not opts:
-            sys.stderr.write(parser.format_usage())
-            sys.stderr.write("crit: error: too few arguments\n")
+            conn.sendall("ERROR: Too few arguments\n")
         else:
-            opts["func"](opts)
-
-        conn.sendall("PLOTTING:" + data)
+            if(opts["func"](opts, conn)):
+                conn.sendall("SUCCESS: " + data)
+        
         # update plot
         conn.close()
 
