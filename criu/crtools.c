@@ -253,10 +253,16 @@ int main(int argc, char *argv[], char *envp[])
 	}
 
 	if (!strcmp(argv[optind], "migrate")) {
+		struct user_pt_regs regs;
+		struct iovec io;
+		io.iov_base = &regs;
+		io.iov_len = sizeof(regs);
+		opts.dump_at_start = true;
+
 		if (!opts.tree_id)
 			goto opt_pid_missing;
 
-		opts.dump_at_start = true;
+		pr_info("Migrating: %d\n", opts.tree_id);
 		
 		// Attach to the child
 		if (ptrace(PTRACE_SEIZE, opts.tree_id, 0, 0)) {
@@ -264,43 +270,20 @@ int main(int argc, char *argv[], char *envp[])
 			return -1;
 		}
 
-		// if (ptrace(PTRACE_INTERRUPT, opts.tree_id, 0, 0)) {
-		// 	pr_perror("Can't interrupt %d", opts.tree_id);
-		// 	return -1;
-		// }
-
-		// /* Wait for the child process */
-    	// waitpid(opts.tree_id, 0, 0);
-
-		while(true) {
-			struct user_pt_regs regs;
-			struct iovec io;
-			long syscall;
-			io.iov_base = &regs;
-			io.iov_len = sizeof(regs);
-			
-			// Run until before a syscall
-			if (ptrace(PTRACE_SYSCALL, opts.tree_id, 0, 0) == -1)
-				pr_err("%s", strerror(errno));
-			if (waitpid(opts.tree_id, 0, 0) == -1)
-				pr_err("%s", strerror(errno));
-
-			/* Gather system call arguments */
-			if (ptrace(PTRACE_GETREGSET, opts.tree_id, (void*)NT_PRSTATUS, &io) == -1)
-				pr_err("%s", strerror(errno));
-			syscall = regs.regs[8];
-
-			// Execute the syscall itself
-			if (ptrace(PTRACE_SYSCALL, opts.tree_id, 0, 0) == -1)
-				pr_err("%s", strerror(errno));
-			if (waitpid(opts.tree_id, 0, 0) == -1)
-				pr_err("%s", strerror(errno));
-		
-			if(syscall == 135) {
-				pr_info("rt_sigprocmask syscall detected: pid %d would now resume code execution\n", opts.tree_id);
-				break;
-			}
+		if (ptrace(PTRACE_INTERRUPT, opts.tree_id, 0, 0)) {
+			pr_perror("Can't interrupt %d", opts.tree_id);
+			return -1;
 		}
+
+		/* Gather registers */
+		if (ptrace(PTRACE_GETREGSET, opts.tree_id, (void*)NT_PRSTATUS, &io) == -1)
+			pr_err("%s", strerror(errno));
+		pr_info("reg value: %ld\n", (long) regs.regs[0]);
+
+		/* Change the register to exit the loop */
+		regs.regs[0] = 0;
+		if (ptrace(PTRACE_SETREGSET, opts.tree_id, (void*)NT_PRSTATUS, &io) == -1)
+			pr_err("%s", strerror(errno));
 
 		return cr_dump_tasks(opts.tree_id);
 	}
