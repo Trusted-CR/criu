@@ -252,10 +252,69 @@ int main(int argc, char *argv[], char *envp[])
 		return cr_pre_dump_tasks(opts.tree_id) != 0;
 	}
 
+	if (!strcmp(argv[optind], "migrate")) {
+		if (!opts.tree_id)
+			goto opt_pid_missing;
+
+		opts.dump_at_start = true;
+		
+		// Attach to the child
+		if (ptrace(PTRACE_SEIZE, opts.tree_id, 0, 0)) {
+			pr_perror("Can't seize to %d", opts.tree_id);
+			return -1;
+		}
+
+		// if (ptrace(PTRACE_INTERRUPT, opts.tree_id, 0, 0)) {
+		// 	pr_perror("Can't interrupt %d", opts.tree_id);
+		// 	return -1;
+		// }
+
+		// /* Wait for the child process */
+    	// waitpid(opts.tree_id, 0, 0);
+
+		while(true) {
+			struct user_pt_regs regs;
+			struct iovec io;
+			long syscall;
+			io.iov_base = &regs;
+			io.iov_len = sizeof(regs);
+			
+			// Run until before a syscall
+			if (ptrace(PTRACE_SYSCALL, opts.tree_id, 0, 0) == -1)
+				pr_err("%s", strerror(errno));
+			if (waitpid(opts.tree_id, 0, 0) == -1)
+				pr_err("%s", strerror(errno));
+
+			/* Gather system call arguments */
+			if (ptrace(PTRACE_GETREGSET, opts.tree_id, (void*)NT_PRSTATUS, &io) == -1)
+				pr_err("%s", strerror(errno));
+			syscall = regs.regs[8];
+
+			// Execute the syscall itself
+			if (ptrace(PTRACE_SYSCALL, opts.tree_id, 0, 0) == -1)
+				pr_err("%s", strerror(errno));
+			if (waitpid(opts.tree_id, 0, 0) == -1)
+				pr_err("%s", strerror(errno));
+		
+			if(syscall == 135) {
+				pr_info("rt_sigprocmask syscall detected: pid %d would now resume code execution\n", opts.tree_id);
+				break;
+			}
+		}
+
+		return cr_dump_tasks(opts.tree_id);
+	}
+
 	if (!strcmp(argv[optind], "start")) {
+		char *aargv[3];
 		pid_t pid;
 		pr_info("Going to start a binary and checkpoint it right at the start\n");
 		opts.dump_at_start = true;
+
+		aargv[0] = "../nbench";
+
+		aargv[1] = "-c../COM.DAT";
+		aargv[2] = 0;
 
 		pid = fork();
 		switch (pid) {
@@ -273,7 +332,7 @@ int main(int argc, char *argv[], char *envp[])
 				
 				/* Because we're now a tracee, execvp will block until the parent
 				* attaches and allows us to continue. */
-				execvp("../loop", argv + 1);
+				execvp("../nbench", aargv);
 				pr_err("Error: %s", strerror(errno));
 		}
 
