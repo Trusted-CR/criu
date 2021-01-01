@@ -146,8 +146,8 @@ int main(int argc, char *argv[], char *envp[])
 			goto usage;
 		}
 
-		if (strcmp(argv[optind], "restore")) {
-			pr_err("--exec-cmd is available for the restore command only\n");
+		if (strcmp(argv[optind], "restore") && strcmp(argv[optind], "start")) {
+			pr_err("--exec-cmd is available for the restore and start commands only\n");
 			goto usage;
 		}
 
@@ -289,15 +289,9 @@ int main(int argc, char *argv[], char *envp[])
 	}
 
 	if (!strcmp(argv[optind], "start")) {
-		char *aargv[3];
 		pid_t pid;
 		pr_info("Going to start a binary and checkpoint it right at the start\n");
 		opts.dump_at_start = true;
-
-		aargv[0] = "../nbench";
-
-		aargv[1] = "-c../COM.DAT";
-		aargv[2] = 0;
 
 		pid = fork();
 		switch (pid) {
@@ -315,7 +309,7 @@ int main(int argc, char *argv[], char *envp[])
 				
 				/* Because we're now a tracee, execvp will block until the parent
 				* attaches and allows us to continue. */
-				execvp("../nbench", aargv);
+				execvp(opts.exec_cmd[0], opts.exec_cmd);
 				pr_err("Error: %s", strerror(errno));
 		}
 
