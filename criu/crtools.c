@@ -206,7 +206,7 @@ int main(int argc, char *argv[], char *envp[])
 			opts.shell_job)
 		pr_warn("Stopped and detached shell job will get SIGHUP from OS.\n");
 
-	if (chdir(opts.work_dir)) {
+	if (strcmp(argv[optind], "start") && chdir(opts.work_dir)) {
 		pr_perror("Can't change directory to %s", opts.work_dir);
 		return 1;
 	}
@@ -355,6 +355,11 @@ int main(int argc, char *argv[], char *envp[])
 				pr_info("SYSCALL_EXECVE detected: pid %d is now at the starting point\n", pid);
 				break;
 			}
+		}
+		
+		if (chdir(opts.work_dir)) {
+			pr_perror("Can't change directory to %s", opts.work_dir);
+			return 1;
 		}
 
 		return cr_dump_tasks(pid);
