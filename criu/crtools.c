@@ -252,6 +252,9 @@ int main(int argc, char *argv[], char *envp[])
 		return cr_pre_dump_tasks(opts.tree_id) != 0;
 	}
 
+	// For binaries that use the migration API
+	// These binaries enter a endless loop that can be ended by changing the register value
+	// which is exactly what this command does before dumping.
 	if (!strcmp(argv[optind], "migrate")) {
 		struct user_pt_regs regs;
 		struct iovec io;
@@ -288,6 +291,7 @@ int main(int argc, char *argv[], char *envp[])
 		return cr_dump_tasks(opts.tree_id);
 	}
 
+	// Start a binary right at the start of execution so it can be migrated to the secure world
 	if (!strcmp(argv[optind], "start")) {
 		pid_t pid;
 		pr_info("Going to start a binary and checkpoint it right at the start\n");
@@ -300,15 +304,16 @@ int main(int argc, char *argv[], char *envp[])
 			case 0:  /* child */
 				ptrace(PTRACE_TRACEME, 0, 0, 0);
 
-				// Detach from criu being the parent process
+				// Detach from CRIU being the parent process or it will be checkpointed as well.
 				setsid();
 
-				// File descriptors are inherited from the parent even after exec, close them to be sure.
+				// File descriptors are inherited from the parent even after exec, close them to be sure
+				// or they will be checkpointed.
 				for (int fd = 3; fd < 256; fd++) 
 					(void) close(fd);
 				
 				/* Because we're now a tracee, execvp will block until the parent
-				* attaches and allows us to continue. */
+				 * attaches and allows us to continue. */
 				execvp(opts.exec_cmd[0], opts.exec_cmd);
 				pr_err("Error: %s", strerror(errno));
 		}
@@ -351,6 +356,7 @@ int main(int argc, char *argv[], char *envp[])
 			if (waitpid(pid, 0, 0) == -1)
 				pr_err("%s", strerror(errno));
 		
+			// Checkpoint right after the execve syscall (221 for ARM64).
 			if(syscall == 221) {
 				pr_info("SYSCALL_EXECVE detected: pid %d is now at the starting point\n", pid);
 				break;
@@ -365,6 +371,7 @@ int main(int argc, char *argv[], char *envp[])
 		return cr_dump_tasks(pid);
 	}
 
+	// Execute a single system call and dump the process again.
 	if (!strcmp(argv[optind], "execute")) {
 		pr_info("Going to execute a single instruction\n");
 		opts.single_instruction = true;
