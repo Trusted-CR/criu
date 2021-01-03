@@ -379,19 +379,22 @@ int main(int argc, char *argv[], char *envp[])
 		if (opts.tree_id)
 			pr_warn("Using -t with criu restore is obsoleted\n");
 
-		// Restore the checkpoint and keep it paused.
+		// Restore the checkpoint
+		// Because opts.single_instruction is set to true, CRIU is only going
+		// to execute one single system call. After that it will keep the process
+		// attached with ptrace so it can be dumped again.
 		ret = cr_restore_tasks();
 
 		pr_info("Executed a single instruction!");
-		// TODO: ptrace execute single instruction here
 
 		// Re-open the images directory in dump mode instead of restore mode
 		SET_CHAR_OPTS(imgs_dir, ".");
 		open_image_dir(opts.imgs_dir, O_DUMP);
 
-
 		close_pid_proc();
 
+		// CRIU is not built to do a restore and dump in one execution run.
+		// This is needed to reset some variables.
 		empty_ns();
 		
 		// Checkpoint again
