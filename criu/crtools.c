@@ -252,45 +252,6 @@ int main(int argc, char *argv[], char *envp[])
 		return cr_pre_dump_tasks(opts.tree_id) != 0;
 	}
 
-	// For binaries that use the migration API
-	// These binaries enter a endless loop that can be ended by changing the register value
-	// which is exactly what this command does before dumping.
-	if (!strcmp(argv[optind], "migrate")) {
-		struct user_pt_regs regs;
-		struct iovec io;
-		io.iov_base = &regs;
-		io.iov_len = sizeof(regs);
-		opts.dump_at_start = true;
-
-		if (!opts.tree_id)
-			goto opt_pid_missing;
-
-		pr_info("Migrating: %d\n", opts.tree_id);
-		
-		// Attach to the child
-		if (ptrace(PTRACE_SEIZE, opts.tree_id, 0, 0)) {
-			pr_perror("Can't seize to %d", opts.tree_id);
-			return -1;
-		}
-
-		if (ptrace(PTRACE_INTERRUPT, opts.tree_id, 0, 0)) {
-			pr_perror("Can't interrupt %d", opts.tree_id);
-			return -1;
-		}
-
-		/* Gather registers */
-		if (ptrace(PTRACE_GETREGSET, opts.tree_id, (void*)NT_PRSTATUS, &io) == -1)
-			pr_err("%s", strerror(errno));
-		pr_info("reg value: %ld\n", (long) regs.regs[0]);
-
-		/* Change the register to exit the loop */
-		regs.regs[0] = 0;
-		if (ptrace(PTRACE_SETREGSET, opts.tree_id, (void*)NT_PRSTATUS, &io) == -1)
-			pr_err("%s", strerror(errno));
-
-		return cr_dump_tasks(opts.tree_id);
-	}
-
 	// Start a binary right at the start of execution so it can be migrated to the secure world
 	if (!strcmp(argv[optind], "start")) {
 		pid_t pid;
